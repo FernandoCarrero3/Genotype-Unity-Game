@@ -1,6 +1,10 @@
 /// <summary>
-/// Controla el movimiento y la rotación de la nave del jugador
-/// usando físicas Rigidbody en un plano Zero-G (sin gravedad).
+/// Controla el vuelo 3D de la nave del jugador estilo avión de combate.
+/// La nave siempre avanza hacia donde mira.
+/// - W/S: acelerar / frenar
+/// - A/D: rotar izquierda / derecha (Yaw)
+/// - Ratón Y: rotar arriba / abajo (Pitch)
+/// - Q/E: rotar sobre sí misma (Roll)
 /// </summary>
 
 using UnityEngine;
@@ -8,32 +12,43 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
-    // ─── Inspector ────────────────────────────────────────────────────────────
-
-    [Header("Movimiento")]
-    [Tooltip("Fuerza de aceleración aplicada cada FixedUpdate.")]
+    [Header("Velocidad")]
+    [Tooltip("Fuerza de aceleración hacia adelante.")]
     [SerializeField] private float thrustForce = 20f;
 
-    [Tooltip("Velocidad máxima de la nave (unidades/segundo).")]
-    [SerializeField] private float maxSpeed = 10f;
+    [Tooltip("Velocidad máxima de la nave.")]
+    [SerializeField] private float maxSpeed = 15f;
 
     [Header("Rotación")]
-    [Tooltip("Velocidad de rotación hacia la dirección de movimiento.")]
-    [SerializeField] private float rotationSpeed = 10f;
+    [Tooltip("Velocidad de rotación Yaw (A/D) y Pitch (ratón).")]
+    [SerializeField] private float rotationSpeed = 90f;
 
-    // ─── Referencias privadas ─────────────────────────────────────────────────
+    [Tooltip("Velocidad de Roll (Q/E).")]
+    [SerializeField] private float rollSpeed = 60f;
 
-    /// <summary>Rigidbody cacheado para no llamar GetComponent cada frame.</summary>
+    [Tooltip("Sensibilidad del ratón para el Pitch.")]
+    [SerializeField] private float mouseSensitivity = 2f;
+
+    // ── Referencias ──────────────────────────────────────────────────────────
+
     private Rigidbody rb;
 
-    /// <summary>Dirección de entrada del jugador en el plano XZ.</summary>
-    private Vector3 inputDirection;
+    // ── Input ────────────────────────────────────────────────────────────────
 
-    // ─── Unity Lifecycle ──────────────────────────────────────────────────────
+    private float thrustInput;
+    private float yawInput;
+    private float pitchInput;
+    private float rollInput;
+
+    // ── Unity Lifecycle ──────────────────────────────────────────────────────
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+
+        // Bloqueamos el cursor para que el ratón no salga de la pantalla
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void Update()
@@ -44,70 +59,69 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         ApplyThrust();
+        ApplyRotation();
         ClampVelocity();
-        RotateTowardsMovement();
     }
 
-    // ─── Métodos privados ─────────────────────────────────────────────────────
-
-/// <summary>
-/// Lee WASD y construye un vector de dirección relativo a la cámara.
-/// Así W siempre significa "hacia donde mira la cámara", no "norte del mundo".
-/// </summary>
-private void ReadInput()
-{
-    float horizontal = Input.GetAxisRaw("Horizontal");
-    float vertical   = Input.GetAxisRaw("Vertical");
-
-    // Tomamos los vectores de la cámara pero ignoramos la inclinación en Y
-    // para que el movimiento sea siempre en el plano XZ.
-    Vector3 camForward = Camera.main.transform.forward;
-    Vector3 camRight   = Camera.main.transform.right;
-
-    // Aplanamos los vectores al plano XZ (Y = 0).
-    camForward.y = 0f;
-    camRight.y   = 0f;
-
-    camForward.Normalize();
-    camRight.Normalize();
-
-    // Combinamos la entrada con las direcciones de la cámara.
-    inputDirection = (camForward * vertical + camRight * horizontal).normalized;
-}
+    // ── Input ────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Aplica fuerza en la dirección de entrada.
-    /// ForceMode.Force respeta la masa del Rigidbody.
+    /// Lee todos los inputs del jugador.
+    /// Se hace en Update para no perder inputs entre frames.
+    /// </summary>
+    private void ReadInput()
+    {
+        // W/S — acelerar / frenar
+        thrustInput = Input.GetAxisRaw("Vertical");
+
+        // A/D — girar izquierda/derecha
+        yawInput = Input.GetAxisRaw("Horizontal");
+
+        // Ratón Y — subir/bajar el morro
+        // Invertimos porque mover el ratón hacia abajo debe bajar el morro
+        pitchInput = -Input.GetAxis("Mouse Y") * mouseSensitivity;
+
+        // Q/E — rotar sobre el eje de avance
+        rollInput = 0f;
+        if (Input.GetKey(KeyCode.Q)) rollInput = -1f;
+        if (Input.GetKey(KeyCode.E)) rollInput =  1f;
+    }
+
+    // ── Movimiento ───────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Empuja la nave hacia donde está mirando (transform.forward).
+    /// W acelera, S frena.
     /// </summary>
     private void ApplyThrust()
     {
-        if (inputDirection == Vector3.zero) return;
-
-        rb.AddForce(inputDirection * thrustForce, ForceMode.Force);
+        if (thrustInput == 0f) return;
+        rb.AddForce(transform.forward * thrustInput * thrustForce, ForceMode.Force);
     }
 
     /// <summary>
-    /// Limita la magnitud de la velocidad a maxSpeed manteniendo la dirección.
+    /// Aplica las tres rotaciones independientes:
+    /// Pitch (arriba/abajo), Yaw (izquierda/derecha), Roll (giro).
+    /// Usamos Rigidbody.MoveRotation para respetar la física.
+    /// </summary>
+    private void ApplyRotation()
+    {
+        float pitch = pitchInput  * rotationSpeed * Time.fixedDeltaTime;
+        float yaw   = yawInput    * rotationSpeed * Time.fixedDeltaTime;
+        float roll  = rollInput   * rollSpeed      * Time.fixedDeltaTime;
+
+        // Construimos la rotación incremental en espacio LOCAL de la nave
+        Quaternion deltaRotation = Quaternion.Euler(pitch, yaw, roll);
+
+        rb.MoveRotation(rb.rotation * deltaRotation);
+    }
+
+    /// <summary>
+    /// Limita la velocidad máxima de la nave.
     /// </summary>
     private void ClampVelocity()
     {
         if (rb.linearVelocity.magnitude > maxSpeed)
-        {
             rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
-        }
-    }
-
-    /// <summary>
-    /// Rota suavemente la nave hacia la dirección actual de movimiento.
-    /// </summary>
-    private void RotateTowardsMovement()
-    {
-        if (rb.linearVelocity.magnitude < 0.1f) return;
-
-        Quaternion targetRotation = Quaternion.LookRotation(
-            rb.linearVelocity.normalized, Vector3.up);
-
-        rb.MoveRotation(Quaternion.Slerp(
-            rb.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime));
     }
 }

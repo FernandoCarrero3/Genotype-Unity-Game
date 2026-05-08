@@ -1,100 +1,80 @@
 /// <summary>
-/// Cámara en tercera persona que sigue y rota suavemente con la nave del jugador.
-///
-/// Características:
-///   - Se posiciona a una distancia y altura fijas relativas a la nave.
-///   - Sigue la posición con Lerp para un movimiento suave sin tirones.
-///   - Rota gradualmente con la nave usando Slerp para evitar giros bruscos.
-///   - Todos los parámetros son ajustables desde el Inspector.
+/// Cámara que sigue a la nave desde atrás en espacio 3D.
+/// Se posiciona siempre detrás y ligeramente arriba de la nave.
+/// Sigue la posición con suavidad y la rotación con algo de delay
+/// para simular inercia y dar sensación de peso a la nave.
 /// </summary>
 
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    // ─── Inspector ────────────────────────────────────────────────────────────
-
     [Header("Referencia")]
-    [Tooltip("Transform de la nave del jugador a seguir.")]
+    [Tooltip("Transform de la nave del jugador.")]
     [SerializeField] private Transform playerTransform;
 
     [Header("Posición")]
-    [Tooltip("Altura de la cámara sobre la nave.")]
-    [SerializeField] private float height = 8f;
-
     [Tooltip("Distancia detrás de la nave.")]
-    [SerializeField] private float distance = 5f;
+    [SerializeField] private float distance = 8f;
 
-    [Tooltip("Suavidad del seguimiento de posición (mayor = más pegada).")]
-    [SerializeField] private float positionSmoothSpeed = 5f;
+    [Tooltip("Altura sobre la nave.")]
+    [SerializeField] private float height = 2f;
+
+    [Tooltip("Suavidad del seguimiento de posición.")]
+    [SerializeField] private float positionSmoothSpeed = 10f;
 
     [Header("Rotación")]
-    [Tooltip("Suavidad de la rotación con la nave (menor = más delay).")]
-    [SerializeField] private float rotationSmoothSpeed = 3f;
+    [Tooltip("Suavidad del seguimiento de rotación. Menor = más delay = más inercia.")]
+    [SerializeField] private float rotationSmoothSpeed = 5f;
 
-    [Tooltip("Ángulo de inclinación hacia abajo en grados.")]
-    [SerializeField] private float tiltAngle = 55f;
+    /// <summary>Rotación actual interpolada de la cámara.</summary>
+    private Quaternion currentRotation;
 
-    // ─── Variables privadas ───────────────────────────────────────────────────
-
-    /// <summary>Rotación horizontal actual de la cámara, interpolada suavemente.</summary>
-    private Quaternion currentYRotation;
-
-    // ─── Unity Lifecycle ──────────────────────────────────────────────────────
+    // ── Unity Lifecycle ──────────────────────────────────────────────────────
 
     private void Awake()
     {
-        // Inicializamos la rotación actual con la de la nave para evitar
-        // un giro brusco al arrancar la escena.
         if (playerTransform != null)
-            currentYRotation = Quaternion.Euler(0f, playerTransform.eulerAngles.y, 0f);
+            currentRotation = playerTransform.rotation;
     }
 
-    /// <summary>
-    /// LateUpdate se ejecuta después de Update y FixedUpdate.
-    /// Es el momento correcto para mover la cámara, ya que el jugador
-    /// ya ha actualizado su posición en este frame.
-    /// </summary>
     private void LateUpdate()
     {
         if (playerTransform == null) return;
-
         FollowPlayer();
     }
 
-    // ─── Métodos privados ─────────────────────────────────────────────────────
+    // ── Seguimiento ──────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Calcula la posición y rotación objetivo de la cámara y las aplica
-    /// suavemente usando Lerp y Slerp.
+    /// Actualiza posición y rotación de la cámara cada frame.
+    /// LateUpdate garantiza que la nave ya movió su posición este frame.
     /// </summary>
     private void FollowPlayer()
     {
-        // ── 1. Rotación ──────────────────────────────────────────────────────
-        // Tomamos solo el giro en Y de la nave (rotación horizontal).
-        // Ignoramos X y Z para que la cámara no se incline con la nave.
-        Quaternion targetYRotation = Quaternion.Euler(
-            0f, playerTransform.eulerAngles.y, 0f);
-
-        // Interpolamos suavemente hacia la rotación objetivo.
-        currentYRotation = Quaternion.Slerp(
-            currentYRotation,
-            targetYRotation,
+        // 1. Interpolamos la rotación hacia la de la nave con delay
+        currentRotation = Quaternion.Slerp(
+            currentRotation,
+            playerTransform.rotation,
             rotationSmoothSpeed * Time.deltaTime);
 
-        // ── 2. Posición ──────────────────────────────────────────────────────
-        // Calculamos el offset detrás y arriba de la nave según su rotación actual.
-        Vector3 offset = currentYRotation * new Vector3(0f, height, -distance);
+        // 2. Calculamos el offset detrás y arriba en espacio LOCAL de la nave
+        Vector3 offset = currentRotation * new Vector3(0f, height, -distance);
+
+        // 3. Posición objetivo = posición nave + offset
         Vector3 targetPosition = playerTransform.position + offset;
 
-        // Lerp suave hacia la posición objetivo.
+        // 4. Suavizamos la posición
         transform.position = Vector3.Lerp(
             transform.position,
             targetPosition,
             positionSmoothSpeed * Time.deltaTime);
 
-        // ── 3. Orientación ───────────────────────────────────────────────────
-        // La cámara siempre mira al jugador con el ángulo de inclinación definido.
-        transform.rotation = currentYRotation * Quaternion.Euler(tiltAngle, 0f, 0f);
+        // 5. La cámara siempre mira hacia la nave
+        // Usamos la rotación interpolada para que el giro también sea suave
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            currentRotation,
+            rotationSmoothSpeed * Time.deltaTime);
     }
 }
