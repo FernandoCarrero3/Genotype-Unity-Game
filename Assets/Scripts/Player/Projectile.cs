@@ -2,7 +2,6 @@
 /// Controla el comportamiento de un proyectil disparado por el jugador.
 /// Se mueve en línea recta en 3D, se autodestruye por tiempo o colisión.
 /// </summary>
-
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -10,14 +9,17 @@ public class Projectile : MonoBehaviour
 {
     [Header("Movimiento")]
     [Tooltip("Velocidad de desplazamiento del proyectil.")]
-    [SerializeField] private float speed = 20f;
+    [SerializeField]
+    private float speed = 20f;
 
     [Tooltip("Segundos antes de autodestruirse si no golpea nada.")]
-    [SerializeField] private float lifetime = 3f;
+    [SerializeField]
+    private float lifetime = 3f;
 
     [Header("Daño")]
     [Tooltip("Daño que aplica al enemigo al impactar.")]
-    [SerializeField] private int damage = 1;
+    [SerializeField]
+    private float damage = 1f;
 
     private Rigidbody rb;
     private Vector3 moveDirection;
@@ -30,7 +32,8 @@ public class Projectile : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (moveDirection == Vector3.zero) return;
+        if (moveDirection == Vector3.zero)
+            return;
         rb.MovePosition(rb.position + moveDirection * speed * Time.fixedDeltaTime);
     }
 
@@ -44,11 +47,15 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player")) return;
+        if (other.CompareTag("Player"))
+            return;
 
-        // TODO Sprint 4: if (other.CompareTag("Enemy")) other.GetComponent<EnemyHealth>()?.TakeDamage(damage);
+        if (other.CompareTag("Enemy"))
+        {
+            other.GetComponent<EnemyHealth>()?.TakeDamage(damage);
+            Debug.Log($"[Projectile] Impacto en enemigo: {other.gameObject.name}");
+        }
 
-        Debug.Log($"[Projectile] Impacto con: {other.gameObject.name}");
         Destroy(gameObject);
     }
 }

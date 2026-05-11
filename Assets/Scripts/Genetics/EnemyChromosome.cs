@@ -21,6 +21,9 @@ public class EnemyChromosome
     /// <summary>Distancia de combate preferida. 0 = cuerpo a cuerpo, 1 = máximo alcance.</summary>
     public float combatRange;
 
+    /// <summary>Vitalidad. 0 = muy frágil, 1 = muy resistente.</summary>
+    public float vitality;
+
     // ── Constructores ────────────────────────────────────────────────────────
 
     /// <summary>
@@ -45,6 +48,7 @@ public class EnemyChromosome
             UnityEngine.Random.value,
             UnityEngine.Random.value,
             UnityEngine.Random.value,
+            UnityEngine.Random.value,
             UnityEngine.Random.value
         );
     }
@@ -53,12 +57,13 @@ public class EnemyChromosome
     /// Crea un cromosoma con genes explícitos.
     /// Usado por el motor genético al cruzar y mutar.
     /// </summary>
-    public EnemyChromosome(float speed, float aggression, float precision, float combatRange)
+    public EnemyChromosome(float speed, float aggression, float precision, float combatRange, float vitality)
     {
         this.speed = Clamp01(speed);
         this.aggression = Clamp01(aggression);
         this.precision = Clamp01(precision);
         this.combatRange = Clamp01(combatRange);
+        this.vitality = Clamp01(vitality);
     }
 
     // ── Utilidades ───────────────────────────────────────────────────────────
@@ -73,6 +78,6 @@ public class EnemyChromosome
     public override string ToString()
     {
         return $"[Chromosome] Speed:{speed:F2} | Aggression:{aggression:F2} | "
-            + $"Precision:{precision:F2} | CombatRange:{combatRange:F2}";
+            + $"Precision:{precision:F2} | CombatRange:{combatRange:F2} | Vitality:{vitality:F2}";
     }
 }

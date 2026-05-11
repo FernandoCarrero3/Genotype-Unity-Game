@@ -2,7 +2,6 @@
 /// Controla el comportamiento de una nave enemiga en 3D.
 /// Lee su EnemyChromosome y mapea los genes [0-1] a valores reales de juego.
 /// </summary>
-
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -10,7 +9,11 @@ public class EnemyController : MonoBehaviour
 {
     // ── Cromosoma ────────────────────────────────────────────────────────────
 
-    [SerializeField] private EnemyChromosome chromosome;
+    [SerializeField]
+    private EnemyChromosome chromosome;
+
+    /// <summary>Propiedad de solo lectura para que EnemyHealth acceda al cromosoma.</summary>
+    public EnemyChromosome Chromosome => chromosome;
 
     // ── Valores reales mapeados desde genes ──────────────────────────────────
 
@@ -23,44 +26,46 @@ public class EnemyController : MonoBehaviour
 
     [Header("Disparo")]
     [Tooltip("Prefab del proyectil enemigo.")]
-    [SerializeField] private GameObject projectilePrefab;
+    [SerializeField]
+    private GameObject projectilePrefab;
 
     [Tooltip("Punto desde donde se spawna el proyectil.")]
-    [SerializeField] private Transform firePoint;
+    [SerializeField]
+    private Transform firePoint;
 
     private float timeSinceLastShot;
 
     // ── Referencias ──────────────────────────────────────────────────────────
 
     private Rigidbody rb;
+    private EnemyHealth enemyHealth;
+    private bool chromosomeApplied = false;
     private Transform playerTransform;
 
     // ── Constantes de mapeo ──────────────────────────────────────────────────
 
-    private const float MIN_SPEED         = 2f;
-    private const float MAX_SPEED         = 12f;
-    private const float MIN_RANGE         = 3f;
-    private const float MAX_RANGE         = 18f;
+    private const float MIN_SPEED = 2f;
+    private const float MAX_SPEED = 12f;
+    private const float MIN_RANGE = 3f;
+    private const float MAX_RANGE = 18f;
     private const float MAX_FIRE_INTERVAL = 4f;
     private const float MIN_FIRE_INTERVAL = 0.5f;
-    private const float MAX_SPREAD        = 25f;
-    private const float MIN_SPREAD        = 0f;
-    private const float RANGE_TOLERANCE   = 1.5f;
+    private const float MAX_SPREAD = 25f;
+    private const float MIN_SPREAD = 0f;
+    private const float RANGE_TOLERANCE = 1.5f;
 
     // ── Unity Lifecycle ──────────────────────────────────────────────────────
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        enemyHealth = GetComponent<EnemyHealth>(); // Primero cacheamos referencias
 
-        // Desactivamos la gravedad y rotación física — la controlamos manualmente
         rb.useGravity = false;
         rb.angularDamping = 10f;
 
         if (chromosome == null)
             chromosome = EnemyChromosome.CreateRandom();
-
-        ApplyChromosome();
     }
 
     private void Start()
@@ -72,19 +77,24 @@ public class EnemyController : MonoBehaviour
         else
             Debug.LogWarning("[EnemyController] No se encontró ningún objeto con Tag 'Player'.");
 
+        if (!chromosomeApplied)
+            ApplyChromosome();
+
         timeSinceLastShot = realFireRate;
     }
 
     private void Update()
     {
-        if (playerTransform == null) return;
+        if (playerTransform == null)
+            return;
         timeSinceLastShot += Time.deltaTime;
         TryShoot();
     }
 
     private void FixedUpdate()
     {
-        if (playerTransform == null) return;
+        if (playerTransform == null)
+            return;
         HandleMovement();
         RotateTowardsPlayer();
     }
@@ -101,14 +111,22 @@ public class EnemyController : MonoBehaviour
 
     private void ApplyChromosome()
     {
-        realSpeed     = Mathf.Lerp(MIN_SPEED, MAX_SPEED, chromosome.speed);
+        realSpeed = Mathf.Lerp(MIN_SPEED, MAX_SPEED, chromosome.speed);
         realCombatRange = Mathf.Lerp(MIN_RANGE, MAX_RANGE, chromosome.combatRange);
-        realFireRate  = Mathf.Lerp(MAX_FIRE_INTERVAL, MIN_FIRE_INTERVAL, chromosome.aggression);
-        realSpread    = Mathf.Lerp(MAX_SPREAD, MIN_SPREAD, chromosome.precision);
+        realFireRate = Mathf.Lerp(MAX_FIRE_INTERVAL, MIN_FIRE_INTERVAL, chromosome.aggression);
+        realSpread = Mathf.Lerp(MAX_SPREAD, MIN_SPREAD, chromosome.precision);
 
         Debug.Log($"[EnemyController] {chromosome}");
-        Debug.Log($"[EnemyController] Speed:{realSpeed:F2} | Range:{realCombatRange:F2} | " +
-                  $"FireRate:{realFireRate:F2}s | Spread:{realSpread:F2}°");
+        Debug.Log(
+            $"[EnemyController] Speed:{realSpeed:F2} | Range:{realCombatRange:F2} | "
+                + $"FireRate:{realFireRate:F2}s | Spread:{realSpread:F2}°"
+        );
+
+        // Inicializamos EnemyHealth con el cromosoma si ya está disponible
+        if (enemyHealth != null)
+            enemyHealth.Initialize(chromosome);
+
+        chromosomeApplied = true;
     }
 
     /// <summary>
@@ -118,10 +136,10 @@ public class EnemyController : MonoBehaviour
     private void HandleMovement()
     {
         // Dirección completa en 3D hacia el jugador
-        Vector3 dirToPlayer    = playerTransform.position - transform.position;
+        Vector3 dirToPlayer = playerTransform.position - transform.position;
         float distanceToPlayer = dirToPlayer.magnitude;
-        Vector3 dirNormalized  = dirToPlayer.normalized;
-        float distanceDelta    = distanceToPlayer - realCombatRange;
+        Vector3 dirNormalized = dirToPlayer.normalized;
+        float distanceDelta = distanceToPlayer - realCombatRange;
 
         if (distanceDelta > RANGE_TOLERANCE)
         {
@@ -141,7 +159,8 @@ public class EnemyController : MonoBehaviour
     private void RotateTowardsPlayer()
     {
         Vector3 dirToPlayer = playerTransform.position - transform.position;
-        if (dirToPlayer == Vector3.zero) return;
+        if (dirToPlayer == Vector3.zero)
+            return;
 
         Quaternion targetRotation = Quaternion.LookRotation(dirToPlayer.normalized, Vector3.up);
         rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, 8f * Time.fixedDeltaTime));
@@ -149,8 +168,10 @@ public class EnemyController : MonoBehaviour
 
     private void TryShoot()
     {
-        if (timeSinceLastShot < realFireRate) return;
-        if (projectilePrefab == null || firePoint == null) return;
+        if (timeSinceLastShot < realFireRate)
+            return;
+        if (projectilePrefab == null || firePoint == null)
+            return;
 
         Shoot();
         timeSinceLastShot = 0f;
@@ -162,14 +183,26 @@ public class EnemyController : MonoBehaviour
     /// </summary>
     private void Shoot()
     {
-        Vector3 dirToPlayer   = (playerTransform.position - firePoint.position).normalized;
+        Vector3 dirToPlayer = (playerTransform.position - firePoint.position).normalized;
         Vector3 spreadDirection = ApplySpread(dirToPlayer);
 
-        GameObject bulletObj  = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        GameObject bulletObj = Instantiate(
+            projectilePrefab,
+            firePoint.position,
+            Quaternion.identity
+        );
         EnemyProjectile bullet = bulletObj.GetComponent<EnemyProjectile>();
 
         if (bullet != null)
+        {
+            // Pasamos la referencia de EnemyHealth al proyectil
+            // para que pueda confirmar el impacto y registrarlo
             bullet.SetDirection(spreadDirection);
+            bullet.SetOwner(enemyHealth);
+        }
+
+        // Registramos el disparo (el hit lo confirmará EnemyProjectile al impactar)
+        enemyHealth?.RegisterShot(false);
     }
 
     /// <summary>
@@ -179,7 +212,7 @@ public class EnemyController : MonoBehaviour
     private Vector3 ApplySpread(Vector3 baseDirection)
     {
         // Rotación aleatoria en Y (horizontal)
-        float randomYaw   = Random.Range(-realSpread, realSpread);
+        float randomYaw = Random.Range(-realSpread, realSpread);
         // Rotación aleatoria en X (vertical)
         float randomPitch = Random.Range(-realSpread, realSpread);
 
