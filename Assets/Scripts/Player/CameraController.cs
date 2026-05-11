@@ -27,6 +27,13 @@ public class CameraController : MonoBehaviour
     [Tooltip("Suavidad del seguimiento de rotación. Menor = más delay = más inercia.")]
     [SerializeField] private float rotationSmoothSpeed = 5f;
 
+    [Header("Colisión")]
+    [Tooltip("Layer de las paredes para el raycast de cámara.")]
+    [SerializeField] private LayerMask wallLayer;
+
+    [Tooltip("Distancia mínima entre la cámara y una pared.")]
+    [SerializeField] private float wallOffset = 0.5f;
+
     /// <summary>Rotación actual interpolada de la cámara.</summary>
     private Quaternion currentRotation;
 
@@ -59,10 +66,11 @@ public class CameraController : MonoBehaviour
             rotationSmoothSpeed * Time.deltaTime);
 
         // 2. Calculamos el offset detrás y arriba en espacio LOCAL de la nave
-        Vector3 offset = currentRotation * new Vector3(0f, height, -distance);
-
-        // 3. Posición objetivo = posición nave + offset
+        Vector3 offset         = currentRotation * new Vector3(0f, height, -distance);
         Vector3 targetPosition = playerTransform.position + offset;
+
+        // 3. Raycast para evitar que la cámara atraviese paredes
+        targetPosition = ClampCameraToWalls(playerTransform.position, targetPosition);
 
         // 4. Suavizamos la posición
         transform.position = Vector3.Lerp(
@@ -70,11 +78,31 @@ public class CameraController : MonoBehaviour
             targetPosition,
             positionSmoothSpeed * Time.deltaTime);
 
-        // 5. La cámara siempre mira hacia la nave
-        // Usamos la rotación interpolada para que el giro también sea suave
+        // 5. La cámara siempre mira hacia la nave con rotación suavizada
         transform.rotation = Quaternion.Slerp(
             transform.rotation,
             currentRotation,
             rotationSmoothSpeed * Time.deltaTime);
+    }
+
+    // ── Colisión con paredes ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Lanza un raycast desde el jugador hacia la posición objetivo de la cámara.
+    /// Solo detecta el layer Wall — ignora jugador, enemigos y proyectiles.
+    /// Si hay una pared en medio, acerca la cámara hasta justo antes del impacto.
+    /// </summary>
+    private Vector3 ClampCameraToWalls(Vector3 from, Vector3 to)
+    {
+        Vector3 direction    = to - from;
+        float   castDistance = direction.magnitude;
+
+        if (Physics.Raycast(from, direction.normalized, out RaycastHit hit, castDistance, wallLayer))
+        {
+            // Retrocedemos desde el punto de impacto hacia el jugador
+            return hit.point - direction.normalized * wallOffset;
+        }
+
+        return to;
     }
 }

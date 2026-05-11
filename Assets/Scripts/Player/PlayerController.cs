@@ -21,13 +21,13 @@ public class PlayerController : MonoBehaviour
 
     [Header("Rotación")]
     [Tooltip("Velocidad de rotación Yaw (A/D) y Pitch (ratón).")]
-    [SerializeField] private float rotationSpeed = 90f;
+    [SerializeField] private float rotationSpeed = 140f;
 
     [Tooltip("Velocidad de Roll (Q/E).")]
-    [SerializeField] private float rollSpeed = 60f;
+    [SerializeField] private float rollSpeed = 120f;
 
     [Tooltip("Sensibilidad del ratón para el Pitch.")]
-    [SerializeField] private float mouseSensitivity = 2f;
+    [SerializeField] private float mouseSensitivity = 1.5f;
 
     // ── Referencias ──────────────────────────────────────────────────────────
 

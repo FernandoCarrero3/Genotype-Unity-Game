@@ -274,6 +274,10 @@ MonoBehaviour:
   height: 4.24
   positionSmoothSpeed: 8
   rotationSmoothSpeed: 4
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  wallOffset: 0.3
 --- !u!1 &408627612
 GameObject:
   m_ObjectHideFlags: 0
@@ -311,7 +315,7 @@ MonoBehaviour:
   - {fileID: 1409910254}
   - {fileID: 1495156927}
   spawnInterval: 1
-  timeBetweenWaves: 5
+  timeBetweenWaves: 2
 --- !u!4 &408627614
 Transform:
   m_ObjectHideFlags: 0
@@ -497,7 +501,7 @@ GameObject:
   - component: {fileID: 550786958}
   - component: {fileID: 550786957}
   - component: {fileID: 550786956}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WallWest
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -609,7 +613,7 @@ GameObject:
   - component: {fileID: 651760398}
   - component: {fileID: 651760397}
   - component: {fileID: 651760396}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WallTop
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -721,7 +725,7 @@ GameObject:
   - component: {fileID: 712851786}
   - component: {fileID: 712851785}
   - component: {fileID: 712851784}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WallBottom
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -833,7 +837,7 @@ GameObject:
   - component: {fileID: 730487720}
   - component: {fileID: 730487719}
   - component: {fileID: 730487718}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WallSouth
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -1011,7 +1015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6df403b70e02f1b4f88d9ecbd3004347, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GeneticAlgorithmManager
-  populationSize: 8
+  populationSize: 2
   tournamentSize: 3
   crossoverRate: 0.5
   baseMutationRate: 0.1
@@ -1044,7 +1048,7 @@ GameObject:
   - component: {fileID: 1315083000}
   - component: {fileID: 1315082999}
   - component: {fileID: 1315082998}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WallEast
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -1420,7 +1424,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 903a20766d0072640a87757d9abb71cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
-  maxHealth: 3
+  maxHealth: 6
   invulnerabilityDuration: 1.5
 --- !u!136 &1527976130
 CapsuleCollider:
@@ -1509,7 +1513,7 @@ GameObject:
   - component: {fileID: 1645026046}
   - component: {fileID: 1645026045}
   - component: {fileID: 1645026044}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WallNorth
   m_TagString: Wall
   m_Icon: {fileID: 0}
