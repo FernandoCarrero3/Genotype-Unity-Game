@@ -59,10 +59,13 @@ public class EnemyController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        enemyHealth = GetComponent<EnemyHealth>(); // Primero cacheamos referencias
+        enemyHealth = GetComponent<EnemyHealth>();
 
         rb.useGravity = false;
         rb.angularDamping = 10f;
+        rb.linearDamping = 2f;
+        rb.constraints =
+            RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
         if (chromosome == null)
             chromosome = EnemyChromosome.CreateRandom();
@@ -97,6 +100,7 @@ public class EnemyController : MonoBehaviour
             return;
         HandleMovement();
         RotateTowardsPlayer();
+        ClampPositionToArena();
     }
 
     // ── Métodos públicos ─────────────────────────────────────────────────────
@@ -131,11 +135,10 @@ public class EnemyController : MonoBehaviour
 
     /// <summary>
     /// Mueve al enemigo en 3D hacia o desde el jugador
-    /// según la diferencia entre distancia actual y realCombatRange.
+    /// usando fuerzas para respetar las colisiones con las paredes.
     /// </summary>
     private void HandleMovement()
     {
-        // Dirección completa en 3D hacia el jugador
         Vector3 dirToPlayer = playerTransform.position - transform.position;
         float distanceToPlayer = dirToPlayer.magnitude;
         Vector3 dirNormalized = dirToPlayer.normalized;
@@ -143,18 +146,23 @@ public class EnemyController : MonoBehaviour
 
         if (distanceDelta > RANGE_TOLERANCE)
         {
-            // Demasiado lejos — avanzar hacia el jugador en 3D
-            rb.MovePosition(rb.position + dirNormalized * realSpeed * Time.fixedDeltaTime);
+            // Demasiado lejos — aplicar fuerza hacia el jugador
+            rb.AddForce(dirNormalized * realSpeed * 2f, ForceMode.Force);
         }
         else if (distanceDelta < -RANGE_TOLERANCE)
         {
-            // Demasiado cerca — retroceder en 3D
-            rb.MovePosition(rb.position - dirNormalized * realSpeed * Time.fixedDeltaTime);
+            // Demasiado cerca — aplicar fuerza en sentido contrario
+            rb.AddForce(-dirNormalized * realSpeed * 2f, ForceMode.Force);
         }
+
+        // Limitar velocidad máxima del enemigo
+        if (rb.linearVelocity.magnitude > realSpeed)
+            rb.linearVelocity = rb.linearVelocity.normalized * realSpeed;
     }
 
     /// <summary>
-    /// Rota suavemente la nave enemiga para que apunte al jugador en 3D.
+    /// Rota suavemente la nave enemiga para que apunte al jugador.
+    /// Usa MoveRotation solo para rotación — no afecta posición.
     /// </summary>
     private void RotateTowardsPlayer()
     {
@@ -163,6 +171,7 @@ public class EnemyController : MonoBehaviour
             return;
 
         Quaternion targetRotation = Quaternion.LookRotation(dirToPlayer.normalized, Vector3.up);
+
         rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, 8f * Time.fixedDeltaTime));
     }
 
@@ -218,5 +227,57 @@ public class EnemyController : MonoBehaviour
 
         Quaternion spreadRotation = Quaternion.Euler(randomPitch, randomYaw, 0f);
         return spreadRotation * baseDirection;
+    }
+
+    /// <summary>
+    /// Mantiene al enemigo dentro de los límites de la arena en el eje Y.
+    /// Corrige la posición y cancela la velocidad vertical si se acerca al borde.
+    /// </summary>
+    private void ClampPositionToArena()
+    {
+        const float ARENA_HALF_SIZE = 18f;
+        Vector3 pos = rb.position;
+
+        bool clamped = false;
+
+        if (pos.y > ARENA_HALF_SIZE)
+        {
+            pos.y = ARENA_HALF_SIZE;
+            clamped = true;
+        }
+        else if (pos.y < -ARENA_HALF_SIZE)
+        {
+            pos.y = -ARENA_HALF_SIZE;
+            clamped = true;
+        }
+
+        if (pos.x > ARENA_HALF_SIZE)
+        {
+            pos.x = ARENA_HALF_SIZE;
+            clamped = true;
+        }
+        else if (pos.x < -ARENA_HALF_SIZE)
+        {
+            pos.x = -ARENA_HALF_SIZE;
+            clamped = true;
+        }
+
+        if (pos.z > ARENA_HALF_SIZE)
+        {
+            pos.z = ARENA_HALF_SIZE;
+            clamped = true;
+        }
+        else if (pos.z < -ARENA_HALF_SIZE)
+        {
+            pos.z = -ARENA_HALF_SIZE;
+            clamped = true;
+        }
+
+        if (clamped)
+        {
+            rb.position = pos;
+            // Cancelamos velocidad en la dirección que salía
+            rb.linearVelocity = Vector3.zero;
+        }
     }
 }

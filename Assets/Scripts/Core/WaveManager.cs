@@ -112,12 +112,17 @@ public class WaveManager : MonoBehaviour
     /// </summary>
     private void SpawnEnemy(EnemyChromosome chromosome, int index)
     {
-        // Elegimos punto de spawn — rotamos entre los disponibles
+        // Offset aleatorio pequeño para evitar que dos enemigos
+        // aparezcan exactamente en el mismo punto
         Transform spawnPoint = spawnPoints[index % spawnPoints.Length];
+        Vector3 randomOffset = new Vector3(Random.Range(-2f, 2f), 0f, Random.Range(-2f, 2f));
 
-        GameObject enemyObj = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
+        GameObject enemyObj = Instantiate(
+            enemyPrefab,
+            spawnPoint.position + randomOffset,
+            spawnPoint.rotation
+        );
 
-        // Asignamos el cromosoma evolucionado
         EnemyController controller = enemyObj.GetComponent<EnemyController>();
         if (controller != null)
             controller.SetChromosome(chromosome);
