@@ -4,6 +4,7 @@
 /// </summary>
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -30,6 +31,7 @@ public class GameManager : MonoBehaviour
     private int pointsPerKill = 100;
 
     public int Score { get; private set; } = 0;
+    public int CurrentWave { get; private set; } = 1;
 
     // ── Eventos ──────────────────────────────────────────────────────────────
 
@@ -53,7 +55,7 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
-        //DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()
@@ -78,6 +80,15 @@ public class GameManager : MonoBehaviour
         Debug.Log("[GameManager] Jugador muerto — Game Over.");
         SetState(GameState.GameOver);
         OnGameOver?.Invoke();
+
+        // Pequeño delay antes de cargar la escena para que se vea el último frame
+        StartCoroutine(LoadGameOverScene());
+    }
+
+    private System.Collections.IEnumerator LoadGameOverScene()
+    {
+        yield return new WaitForSeconds(1.5f);
+        UnityEngine.SceneManagement.SceneManager.LoadScene("GameOver");
     }
 
     private void HandleEnemyDeath(EnemyChromosome chromosome, CombatStats stats)
@@ -107,6 +118,13 @@ public class GameManager : MonoBehaviour
     {
         Score = 0;
         OnScoreChanged?.Invoke(Score);
+    }
+
+    /// <summary>Actualiza la oleada actual. Llamado por WaveManager.</summary>
+    public void SetCurrentWave(int wave)
+    {
+        CurrentWave = wave;
+        Debug.Log($"[GameManager] Oleada actual: {wave}");
     }
 
     // ── Estado ───────────────────────────────────────────────────────────────

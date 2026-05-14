@@ -92,6 +92,8 @@ public class WaveManager : MonoBehaviour
         waveInProgress = true;
         enemiesAlive = currentChromosomes.Count;
 
+        GameManager.Instance?.SetCurrentWave(currentWave);
+
         Debug.Log(
             $"[WaveManager] ── Oleada {currentWave} iniciada "
                 + $"({currentChromosomes.Count} enemigos) ──"
