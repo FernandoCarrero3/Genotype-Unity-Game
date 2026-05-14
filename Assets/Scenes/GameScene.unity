@@ -856,10 +856,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ae48e018772c2945a233ae9ce56e13b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameOverController
-  gameOverPanel: {fileID: 383900082}
-  finalScoreText: {fileID: 1714579379}
-  nameInputPanel: {fileID: 954211089}
-  nameInputField: {fileID: 1247652577}
 --- !u!1 &453669520
 GameObject:
   m_ObjectHideFlags: 0
@@ -2573,7 +2569,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6df403b70e02f1b4f88d9ecbd3004347, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GeneticAlgorithmManager
-  populationSize: 3
+  populationSize: 6
   tournamentSize: 3
   crossoverRate: 0.5
   baseMutationRate: 0.1
@@ -4035,7 +4031,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1841247207}
   - component: {fileID: 1841247206}
-  - component: {fileID: 1841247208}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -4071,18 +4066,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1841247208
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1841247205}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e3eb86504e8638c4cacef42eec109c0c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ScoreManager
 --- !u!1 &1883991797
 GameObject:
   m_ObjectHideFlags: 0
