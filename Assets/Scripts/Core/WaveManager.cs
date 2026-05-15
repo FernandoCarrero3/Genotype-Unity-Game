@@ -76,6 +76,8 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
+        GameManager.Instance?.ResetGame();
+
         // Generamos la población inicial y arrancamos
         currentChromosomes = geneticManager.GenerateInitialPopulation();
         StartCoroutine(StartWaveRoutine());

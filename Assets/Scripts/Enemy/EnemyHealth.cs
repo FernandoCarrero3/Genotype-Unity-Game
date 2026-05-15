@@ -40,6 +40,11 @@ public class EnemyHealth : MonoBehaviour
     public float CurrentHp => currentHp;
     public float MaxHp => maxHp;
 
+    [Header("Efectos")]
+    [Tooltip("Prefab de explosión que se instancia al morir.")]
+    [SerializeField]
+    private GameObject explosionPrefab;
+
     // ── Inicialización ───────────────────────────────────────────────────────
 
     /// <summary>
@@ -95,6 +100,8 @@ public class EnemyHealth : MonoBehaviour
         EnemyChromosome chromosome = controller != null ? controller.Chromosome : null;
 
         OnEnemyDeath?.Invoke(chromosome, stats);
+        if (explosionPrefab != null)
+            Instantiate(explosionPrefab, transform.position, Quaternion.identity);
         Destroy(gameObject);
     }
 

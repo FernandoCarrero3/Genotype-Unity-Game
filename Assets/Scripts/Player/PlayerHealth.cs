@@ -7,9 +7,8 @@
 ///   - Evento OnPlayerDeath que otros sistemas pueden escuchar (HUD, GameManager...).
 ///   - Invulnerabilidad temporal tras recibir daño para evitar hits múltiples.
 /// </summary>
-
-using UnityEngine;
 using System;
+using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -17,10 +16,12 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("Vida")]
     [Tooltip("Vida máxima del jugador.")]
-    [SerializeField] private int maxHealth = 3;
+    [SerializeField]
+    private int maxHealth = 3;
 
     [Tooltip("Segundos de invulnerabilidad tras recibir daño.")]
-    [SerializeField] private float invulnerabilityDuration = 1.5f;
+    [SerializeField]
+    private float invulnerabilityDuration = 1.5f;
 
     // ─── Eventos ──────────────────────────────────────────────────────────────
 
@@ -57,13 +58,22 @@ public class PlayerHealth : MonoBehaviour
 
     private void Awake()
     {
-        // Inicializamos la vida al máximo al arrancar.
-        currentHealth = maxHealth;
+        // Awake no lee Settings — otros Awake pueden no haber corrido aún.
+        // La inicialización real ocurre en Start().
     }
 
     private void Start()
     {
-        // Notificamos al HUD del estado inicial nada más arrancar la escena.
+        // Leemos las vidas configuradas por el jugador en la pantalla de Ajustes.
+        // Si no hay datos guardados, SettingsController devuelve el valor por defecto (3).
+        maxHealth = SettingsController.GetLives();
+        currentHealth = maxHealth;
+
+        Debug.Log(
+            $"[PlayerHealth] Vida inicializada: {currentHealth}/{maxHealth} (desde Settings)"
+        );
+
+        // Notificamos al HUD para que dibuje la barra correctamente desde el inicio.
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
@@ -77,7 +87,8 @@ public class PlayerHealth : MonoBehaviour
     public void TakeDamage(int damage)
     {
         // Si es invulnerable ignoramos el golpe completamente.
-        if (isInvulnerable) return;
+        if (isInvulnerable)
+            return;
 
         currentHealth -= damage;
         currentHealth = Mathf.Max(currentHealth, 0); // Nunca por debajo de 0.

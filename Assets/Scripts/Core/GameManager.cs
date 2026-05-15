@@ -120,6 +120,21 @@ public class GameManager : MonoBehaviour
         OnScoreChanged?.Invoke(Score);
     }
 
+    /// <summary>
+    /// Reinicia todos los datos de partida.
+    /// Llamar al iniciar GameScene para garantizar un estado limpio.
+    /// </summary>
+    public void ResetGame()
+    {
+        Score = 0;
+        CurrentWave = 1;
+        CurrentState = GameState.Playing;
+
+        OnScoreChanged?.Invoke(Score);
+
+        Debug.Log("[GameManager] Partida reiniciada — Score: 0 | Wave: 1 | Estado: Playing");
+    }
+
     /// <summary>Actualiza la oleada actual. Llamado por WaveManager.</summary>
     public void SetCurrentWave(int wave)
     {

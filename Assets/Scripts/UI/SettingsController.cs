@@ -115,7 +115,7 @@ public class SettingsController : MonoBehaviour
     /// <summary>Devuelve las vidas configuradas. Por defecto 3.</summary>
     public static int GetLives()
     {
-        return PlayerPrefs.GetInt(KEY_LIVES, DEFAULT_LIVES);
+        return (int)PlayerPrefs.GetFloat(KEY_LIVES, DEFAULT_LIVES);
     }
 
     /// <summary>Devuelve el volumen configurado. Por defecto 1.</summary>
