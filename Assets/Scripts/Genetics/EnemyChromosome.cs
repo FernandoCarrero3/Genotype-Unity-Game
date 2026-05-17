@@ -57,7 +57,13 @@ public class EnemyChromosome
     /// Crea un cromosoma con genes explícitos.
     /// Usado por el motor genético al cruzar y mutar.
     /// </summary>
-    public EnemyChromosome(float speed, float aggression, float precision, float combatRange, float vitality)
+    public EnemyChromosome(
+        float speed,
+        float aggression,
+        float precision,
+        float combatRange,
+        float vitality
+    )
     {
         this.speed = Clamp01(speed);
         this.aggression = Clamp01(aggression);
@@ -79,5 +85,34 @@ public class EnemyChromosome
     {
         return $"[Chromosome] Speed:{speed:F2} | Aggression:{aggression:F2} | "
             + $"Precision:{precision:F2} | CombatRange:{combatRange:F2} | Vitality:{vitality:F2}";
+    }
+
+    /// <summary>
+    /// Determina el perfil genético dominante comparando los 5 genes.
+    /// Si ningún gen supera el umbral de dominancia, devuelve Balanced.
+    /// </summary>
+    /// <param name="dominanceThreshold">
+    /// Valor mínimo que debe tener el gen dominante para considerarse destacado.
+    /// Por defecto 0.65f — evita perfiles falsos cuando todos los genes son similares.
+    /// </param>
+    public EnemyProfile GetDominantProfile(float dominanceThreshold = 0.65f)
+    {
+        // Buscamos el valor máximo entre los genes relevantes para el perfil visual
+        float maxValue = UnityEngine.Mathf.Max(speed, aggression, vitality);
+
+        // Si el máximo no supera el umbral, el cromosoma es equilibrado
+        if (maxValue < dominanceThreshold)
+            return EnemyProfile.Balanced;
+
+        // Devolvemos el perfil del gen dominante
+        // En empate exacto, Speed tiene prioridad sobre Aggression sobre Vitality
+        if (UnityEngine.Mathf.Approximately(maxValue, speed))
+            return EnemyProfile.Speed;
+        if (UnityEngine.Mathf.Approximately(maxValue, aggression))
+            return EnemyProfile.Aggression;
+        if (UnityEngine.Mathf.Approximately(maxValue, vitality))
+            return EnemyProfile.Vitality;
+
+        return EnemyProfile.Balanced;
     }
 }

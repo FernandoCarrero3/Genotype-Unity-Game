@@ -133,6 +133,12 @@ public class GameManager : MonoBehaviour
         OnScoreChanged?.Invoke(Score);
 
         Debug.Log("[GameManager] Partida reiniciada — Score: 0 | Wave: 1 | Estado: Playing");
+
+        // Garantizar que la pausa está limpia al iniciar partida
+        if (PauseManager.Instance != null)
+        {
+            PauseManager.Instance.Resume();
+        }
     }
 
     /// <summary>Actualiza la oleada actual. Llamado por WaveManager.</summary>

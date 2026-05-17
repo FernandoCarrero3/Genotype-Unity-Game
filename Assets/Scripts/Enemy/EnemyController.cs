@@ -35,6 +35,33 @@ public class EnemyController : MonoBehaviour
 
     private float timeSinceLastShot;
 
+    // ── Visual por perfil genético ───────────────────────────────────────────
+
+    [Header("Modelos visuales")]
+    [Tooltip("Modelo para perfil equilibrado (Drone).")]
+    [SerializeField]
+    private GameObject modelBalanced;
+
+    [Tooltip("Modelo para perfil Speed (AlienFighter).")]
+    [SerializeField]
+    private GameObject modelSpeed;
+
+    [Tooltip("Modelo para perfil Aggression/Vitality (AlienDestroyer).")]
+    [SerializeField]
+    private GameObject modelAggression;
+
+    [Tooltip("FirePoint del modelo Balanced.")]
+    [SerializeField]
+    private Transform firePointBalanced;
+
+    [Tooltip("FirePoint del modelo Speed.")]
+    [SerializeField]
+    private Transform firePointSpeed;
+
+    [Tooltip("FirePoint del modelo Aggression.")]
+    [SerializeField]
+    private Transform firePointAggression;
+
     // ── Referencias ──────────────────────────────────────────────────────────
 
     private Rigidbody rb;
@@ -130,7 +157,36 @@ public class EnemyController : MonoBehaviour
         if (enemyHealth != null)
             enemyHealth.Initialize(chromosome);
 
+        ApplyVisualProfile();
+
         chromosomeApplied = true;
+    }
+
+    /// <summary>
+    /// Activa el modelo visual y FirePoint correspondiente al perfil
+    /// genético dominante del cromosoma. Desactiva los otros dos.
+    /// </summary>
+    private void ApplyVisualProfile()
+    {
+        EnemyProfile profile = chromosome.GetDominantProfile();
+
+        // Activamos solo el modelo correspondiente al perfil
+        modelBalanced.SetActive(profile == EnemyProfile.Balanced);
+        modelSpeed.SetActive(profile == EnemyProfile.Speed);
+        modelAggression.SetActive(
+            profile == EnemyProfile.Aggression || profile == EnemyProfile.Vitality
+        );
+
+        // Apuntamos firePoint al del modelo activo
+        firePoint = profile switch
+        {
+            EnemyProfile.Speed => firePointSpeed,
+            EnemyProfile.Aggression => firePointAggression,
+            EnemyProfile.Vitality => firePointAggression,
+            _ => firePointBalanced,
+        };
+
+        Debug.Log($"[EnemyController] Perfil visual: {profile} | FirePoint: {firePoint.name}");
     }
 
     /// <summary>

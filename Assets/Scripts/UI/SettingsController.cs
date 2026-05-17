@@ -123,4 +123,11 @@ public class SettingsController : MonoBehaviour
     {
         return PlayerPrefs.GetFloat(KEY_VOLUME, DEFAULT_VOLUME);
     }
+
+    /// <summary>Guarda el volumen directamente. Usado desde otras escenas (ej. pausa).</summary>
+    public static void SaveVolume(float volume)
+    {
+        PlayerPrefs.SetFloat(KEY_VOLUME, volume);
+        PlayerPrefs.Save();
+    }
 }

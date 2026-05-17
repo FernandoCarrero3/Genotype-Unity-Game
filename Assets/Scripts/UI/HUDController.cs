@@ -26,6 +26,15 @@ public class HUDController : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI scoreText;
 
+    [Header("Pausa")]
+    [Tooltip("Panel de pausa — se activa/desactiva según el estado.")]
+    [SerializeField]
+    private GameObject pausePanel;
+
+    [Tooltip("Slider de volumen en el panel de pausa.")]
+    [SerializeField]
+    private Slider volumeSlider;
+
     // ── Unity Lifecycle ──────────────────────────────────────────────────────
 
     private void OnEnable()
@@ -33,6 +42,7 @@ public class HUDController : MonoBehaviour
         PlayerHealth.OnHealthChanged += UpdateHealthBar;
         WaveManager.OnWaveStarted += UpdateWaveText;
         GameManager.OnScoreChanged += UpdateScoreText;
+        PauseManager.OnPauseChanged += UpdatePausePanel;
     }
 
     private void OnDisable()
@@ -40,6 +50,7 @@ public class HUDController : MonoBehaviour
         PlayerHealth.OnHealthChanged -= UpdateHealthBar;
         WaveManager.OnWaveStarted -= UpdateWaveText;
         GameManager.OnScoreChanged -= UpdateScoreText;
+        PauseManager.OnPauseChanged -= UpdatePausePanel;
     }
 
     private void Start()
@@ -50,6 +61,12 @@ public class HUDController : MonoBehaviour
 
         if (healthBar != null)
             healthBar.value = 1f;
+
+        if (volumeSlider != null)
+        {
+            volumeSlider.value = SettingsController.GetVolume();
+            volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+        }
     }
 
     // ── Actualizaciones ──────────────────────────────────────────────────────
@@ -82,5 +99,26 @@ public class HUDController : MonoBehaviour
         if (scoreText == null)
             return;
         scoreText.text = score.ToString("N0");
+    }
+
+    /// <summary>
+    /// Muestra u oculta el panel de pausa según el estado.
+    /// </summary>
+    private void UpdatePausePanel(bool isPaused)
+    {
+        if (pausePanel == null)
+            return;
+        pausePanel.SetActive(isPaused);
+    }
+
+    /// <summary>
+    /// Llamado cuando el jugador mueve el slider de volumen en pausa.
+    /// Aplica el volumen inmediatamente y lo guarda en Settings.
+    /// </summary>
+    private void OnVolumeChanged(float value)
+    {
+        AudioListener.volume = value;
+        SettingsController.SaveVolume(value);
+        Debug.Log($"[HUDController] Volumen ajustado: {value:F2}");
     }
 }
